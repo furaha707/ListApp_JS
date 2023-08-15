@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous" />
+	</head>
+	<body>
+		<nav class="navbar navbar-expand-lg bg-body-tertiary">
+			<div class="container-fluid">
+				<a class="navbar-brand" href="#">Navbar</a>
+				<span id="nickname" class="ms-auto mx-2">로그인한 사람의 이름</span>
+				<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<div class="collapse navbar-collapse" id="navbarSupportedContent">
+					<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+						<li class="nav-item">
+							<a class="nav-link active" aria-current="page" href="/">Home</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="./login.html">로그인</a>
+						</li>
+						<li class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"> Dropdown </a>
+							<ul class="dropdown-menu">
+								<li><a class="dropdown-item" href="#">Action</a></li>
+								<li><a class="dropdown-item" href="#">Another action</a></li>
+								<li><hr class="dropdown-divider" /></li>
+								<li><a class="dropdown-item" href="#">Something else here</a></li>
+							</ul>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link disabled" aria-disabled="true">Disabled</a>
+						</li>
+					</ul>
+					<form class="d-flex" role="search">
+						<input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" />
+						<button class="btn btn-outline-success" type="submit">Search</button>
+					</form>
+				</div>
+			</div>
+		</nav>
+		<div class="container">
+			<input type="text" placeholder="name" id="name-new" class="form-control" />
+			<input type="email" placeholder="email" id="email-new" class="form-control" />
+			<input type="password" placeholder="password" id="pw-new" class="form-control" />
+			<button type="submit" id="register" class="btn btn-danger">가입하기</button>
+		</div>
+		<div class="container">
+			<input type="email" placeholder="email" id="email" class="form-control" />
+			<input type="password" placeholder="password" id="pw" class="form-control" />
+			<button type="submit" id="login-btn" class="btn btn-primary">로그인하기</button>
+		</div>
+		<div class="container">
+			<button type="button" id="logout-btn" class="btn btn-dark">로그아웃</button>
+		</div>
+		<script src="/__/firebase/8.6.5/firebase-app.js"></script>
+		<script src="/__/firebase/8.6.5/firebase-auth.js"></script>
+		<script src="/__/firebase/8.6.5/firebase-firestore.js"></script>
+		<script src="/__/firebase/8.6.5/firebase-storage.js"></script>
+		<script src="../assets/js/main.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+		<script>
+			const storage = firebase.storage();
+			const regisBtn = document.getElementById('register');
+			const loginBtn = document.getElementById('login-btn');
+			const logoutBtn = document.getElementById('logout-btn');
+			let NickName = document.getElementById('nickname');
+
+			regisBtn.addEventListener('click', function () {
+				let email = document.getElementById('email-new').value;
+				let password = document.getElementById('pw-new').value;
+				let name = document.getElementById('name-new').value;
+
+				// 로그인기능 소환
+				firebase
+					.auth()
+					.createUserWithEmailAndPassword(email, password)
+					.then((result) => {
+						console.log(result);
+						console.log(result.user);
+						result.user.updateProfile({ displayName: name });
+						// .then() 사용가능
+					})
+					.catch();
+			});
+
+			loginBtn.addEventListener('click', function () {
+				let email = document.getElementById('email').value;
+				let password = document.getElementById('pw').value;
+				firebase
+					.auth()
+					.signInWithEmailAndPassword(email, password)
+					.then((result) => {
+						console.log(result.user);
+					});
+			});
+
+			// 로그아웃 함수
+			logoutBtn.addEventListener('click', function () {
+				firebase.auth().signOut();
+				localStorage.removeItem('user');
+			});
+
+			// 유저정보 확인
+			if (localStorage.getItem('user')) {
+				let user = JSON.parse(localStorage.getItem('user'));
+				NickName.textContent = user.displayName;
+				console.log(user.displayName);
+			}
+
+			// 사용자의 인증 상태가 변화가 생기면 동작함
+			firebase.auth().onAuthStateChanged((user) => {
+				if (user) {
+					console.log(user.uid);
+					console.log(user.displayName);
+					localStorage.setItem('user', JSON.stringify(user));
+				}
+			});
+		</script>
+	</body>
+</html>
+

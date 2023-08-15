@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous" />
+	</head>
+	<body>
+		<nav class="navbar navbar-expand-lg bg-body-tertiary">
+			<div class="container-fluid">
+				<a class="navbar-brand" href="#">Navbar</a>
+				<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<div class="collapse navbar-collapse" id="navbarSupportedContent">
+					<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+						<li class="nav-item">
+							<a class="nav-link active" aria-current="page" href="#">Home</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="./login.html">로그인</a>
+						</li>
+						<li class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"> Dropdown </a>
+							<ul class="dropdown-menu">
+								<li><a class="dropdown-item" href="#">Action</a></li>
+								<li><a class="dropdown-item" href="#">Another action</a></li>
+								<li><hr class="dropdown-divider" /></li>
+								<li><a class="dropdown-item" href="#">Something else here</a></li>
+							</ul>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link disabled" aria-disabled="true">Disabled</a>
+						</li>
+					</ul>
+					<form class="d-flex" role="search">
+						<input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" />
+						<button class="btn btn-outline-success" type="submit">Search</button>
+					</form>
+				</div>
+			</div>
+		</nav>
+		<button class="btn btn-primary" id="update-btn">수정</button>
+		<button class="btn btn-danger" id="complete-btn">저장</button>
+		<div class="container" id="detail-wrap"></div>
+		<script src="/__/firebase/8.6.5/firebase-app.js"></script>
+		<script src="/__/firebase/8.6.5/firebase-auth.js"></script>
+		<script src="/__/firebase/8.6.5/firebase-firestore.js"></script>
+		<script src="/__/firebase/8.6.5/firebase-storage.js"></script>
+		<script src="../assets/js/main.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+		<script>
+			let personId = new URLSearchParams(window.location.search);
+			const detailWrap = document.getElementById('detail-wrap');
+			let detailView = '';
+			const updateBtn = document.getElementById('update-btn');
+			const completeBtn = document.getElementById('complete-btn');
+
+			// const auth = firebase.auth().currentUser;
+
+			completeBtn.style.display = 'none';
+
+			db.collection('person')
+				.doc(personId.get('id'))
+				.get()
+				.then((result) => {
+					detailView = `
+			<div>
+				<h5 class="image"><img src="${result.data().image}"></h5>
+				<hr />
+				<p class="name">${result.data().name}</p>
+				<p class="age">${result.data().age}</p>
+				<p class="sort">${result.data().sort}</p>
+			</div>
+					`;
+					// console.log(result);
+					// console.log(result.data());
+					detailWrap.innerHTML = detailView;
+				});
+
+			// 작성자만 수정할 수 있도록
+			// if (auth.user === personId.get('id')) {
+			updateBtn.addEventListener('click', function () {
+				db.collection('person')
+					.doc(personId.get('id'))
+					.get()
+					.then((result) => {
+						console.log(result.data());
+						detailView = `
+				<div>
+					<h5 class="image">
+						<input type="file" id="image" />
+						<p class="preview-wrap">
+							<img src="${result.data().image}" id="image-preview">
+							</p>
+					</h5>
+				<hr />
+				<p class="name"><input type="text" class="form-control" id="name" placeholder="이름" value="${result.data().name}" /></p>
+				<p class="age"><input type="text" class="form-control" id="age" placeholder="나이" value="${result.data().age}" /></p>
+				<p class="sort"><input type="text" class="form-control" id="sort" placeholder="현재상황" value="${result.data().sort}" /></p>
+			</div>
+				`;
+						detailWrap.innerHTML = detailView;
+						completeBtn.style.display = 'block';
+						updateBtn.style.display = 'none';
+
+						const imageInput = document.getElementById('image');
+						const imagePreview = document.getElementById('image-preview');
+						const previewWrap = document.querySelector('.preview-wrap');
+						const deleteBtn = document.querySelector('delete-btn');
+
+						// 이미지 미리보기
+						imageInput.addEventListener('change', function (event) {
+							const selectedImage = event.target.files[0];
+
+							if (selectedImage) {
+								const reader = new FileReader();
+
+								reader.onload = function (e) {
+									imagePreview.src = e.target.result;
+								};
+
+								reader.readAsDataURL(selectedImage);
+
+								// const imageDelete = document.createElement('button');
+								// imageDelete.classList.add('delete-btn');
+								// imageDelete.textContent = 'X';
+
+								// previewWrap.appendChild(imageDelete);
+
+								// imageDelete.addEventListener('click', function () {
+								// 	imagePreview.src = '';
+								// 	imageInput.value = '';
+								// 	imageDelete.remove();
+								// });
+							} else {
+								imagePreview.src = '';
+							}
+						});
+					});
+			});
+
+			// } else {
+			// 	updateBtn.addEventListener('click', function () {
+			// 		alert('로그인하세요');
+			// 	});
+			// }
+			// });
+
+			// imageInput.addEventListener('change', function (event) {
+			// 	const selectedImage = event.target.files[0];
+
+			// 	if (selectedImage) {
+			// 		const reader = new FileReader();
+
+			// 		reader.onload = function (e) {
+			// 			imagePreview.src = e.target.result;
+			// 		};
+
+			// 		reader.readAsDataURL(selectedImage);
+
+			// 		const imageDelete = document.createElement('button');
+			// 		imageDelete.classList.add('delete-btn');
+			// 		imageDelete.textContent = 'X';
+
+			// 		previewWrap.appendChild(imageDelete);
+
+			// 		imageDelete.addEventListener('click', function () {
+			// 			imagePreview.src = '';
+			// 			imageInput.value = '';
+			// 			imageDelete.remove();
+			// 		});
+			// 	} else {
+			// 		imagePreview.src = '';
+			// 	}
+			// });
+
+			completeBtn.addEventListener('click', function () {
+				let newNameValue = document.getElementById('name').value;
+				let newAgeValue = document.getElementById('age').value;
+				let newSortValue = document.getElementById('sort').value;
+
+				db.collection('person')
+					.doc(personId.get('id'))
+					.get()
+					.then((result) => {
+						const existData = result.data();
+
+						const updatedData = {
+							...existData,
+							name: newNameValue,
+							age: newAgeValue,
+							sort: newSortValue,
+						};
+
+						db.collection('person')
+							.doc(personId.get('id'))
+							.update(updatedData)
+							.then(() => {
+								console.log('DATA updated');
+								detailView = `
+								<div>
+									<h5 class="image"><img src="${updatedData.image}"></h5>
+									<hr />
+									<p class="name">${updatedData.name}</p>
+									<p class="age">${updatedData.age}</p>
+									<p class="sort">${updatedData.sort}</p>
+								</div>
+					`;
+								detailWrap.innerHTML = detailView;
+								completeBtn.style.display = 'none';
+								updateBtn.style.display = 'block';
+							});
+					})
+
+					.catch((error) => {
+						console.log('Error updating data:', error);
+					});
+			});
+		</script>
+	</body>
+</html>
+
