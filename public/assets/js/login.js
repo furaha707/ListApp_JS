@@ -1,7 +1,6 @@
 
 document.addEventListener('DOMContentLoaded', function() {
 
-  console.log('login');
 
   const login = document.getElementById('login');
   const logoutBtn = document.getElementById('logout-btn');
@@ -16,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateNickname();
     login.style.display = 'block';
     logoutBtn.style.display = 'none';
+    
   });
   
   // 닉네임 업데이트 함수
