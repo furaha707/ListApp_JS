@@ -3,7 +3,8 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Document</title>
+		<title>내담자등록관리</title>
+		<link rel="icon" type="image/png" href="/assets/image/logo2.png" />
 		<link rel="stylesheet" href="./assets/css/common.min.css" />
 		<link rel="stylesheet" href="./assets/css/main.min.css" />
 		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous" />
@@ -14,9 +15,9 @@
 			<div class="container-fluid">
 				<a href="/" class="navbar-brand">
 					<img src="/assets/image/logo2.png" alt="로고" />
-					내담자등록관리
+					<span>내담자등록관리</span>
 				</a>
-				<span id="nickname" class="ms-auto mx-2">로그인 후 이용해주세요</span>
+				<span id="nickname" class="ms-auto mx-3">로그인 후 이용해주세요</span>
 				<ul class="navbar-nav">
 					<li class="nav-item">
 						<button type="button" id="login" class="btn btn-danger" onClick="location.href='/sub/login.html'">로그인</button>
@@ -39,9 +40,10 @@
 							</button>
 						</div>
 					</div>
-					<button type="button" class="btn" id="create-btn">신규등록</button>
-
-					<button type="button" class="btn" id="delete-btn">선택삭제</button>
+					<div class="btns-wrap">
+						<button type="button" class="btn" id="create-btn">신규등록</button>
+						<button type="button" class="btn" id="delete-btn">선택삭제</button>
+					</div>
 				</div>
 
 				<div class="list-wrapper">
@@ -70,7 +72,7 @@
 		<script src="/__/firebase/8.6.5/firebase-auth.js"></script>
 		<script src="/__/firebase/8.6.5/firebase-firestore.js"></script>
 		<script src="/__/firebase/8.6.5/firebase-storage.js"></script>
-		<script src="./assets/js/main.js"></script>
+		<script src="./assets/js/firebase.js"></script>
 		<script src="./assets/js/login.js"></script>
 		<script src="./assets/js/loading.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
@@ -81,10 +83,11 @@
 			const searchBtn = document.getElementById('search-btn');
 			const searchInput = document.getElementById('search-input');
 			const resetBtn = document.getElementById('reset-btn');
+			const auth = firebase.auth();
 
 			showLoadingImage();
 
-			// 기본적으로 초기 렌더링해주고 현재 데이터로 가지고
+			// 초기 렌더링
 			const render = function () {
 				db.collection('person')
 					.get()
@@ -93,6 +96,7 @@
 						result.forEach((doc) => {
 							let btnClass = '';
 
+							// 상담종류에 따라 버튼 색상 달라짐
 							if (doc.data().sort === '상담중') {
 								btnClass = 'btn-primary';
 							} else if (doc.data().sort === '치료중') {
@@ -127,17 +131,13 @@
 
 			render();
 
-			// 새로 등록할 페이지로 가야지
+			// 프로필 새로 등록할 페이지로 이동
 			const createList = function () {
-				// data 에 추가
-				// render();
 				window.location.href = './sub/regis.html';
 			};
 
-			// 체크된 아이템은 삭제해줄거야 데이터에서. 그리고 다시 렌더링해
+			// 프로필 삭제하기
 			const deleteList = function () {
-				console.log('삭제하기');
-				// 삭제하려는 문서의 ID를 가져옵니다.
 				let deleteList = [];
 
 				const checkboxes = document.querySelectorAll('input[name="selection"]:checked');
@@ -152,6 +152,7 @@
 				const currentUser = firebase.auth().currentUser;
 				if (!currentUser) {
 					alert('로그인 후에 사용 가능합니다');
+					window.location.href = '/sub/login.html';
 					return;
 				}
 
@@ -159,36 +160,32 @@
 					.then((docs) => {
 						const deletableDocs = docs.filter((doc) => doc.data().uid === currentUser.uid);
 						if (deletableDocs.length !== deleteList.length) {
-							alert('등록한 담당자만 삭제할 수 있습니다');
+							alert('작성자만 삭제할 수 있습니다');
 							return;
 						}
 
-						Promise.all(deleteList.map((docId) => db.collection('person').doc(docId).delete()))
-							.then(() => {
-								alert('삭제되었습니다');
-								render();
-							})
-							.catch((error) => {
-								console.error('Error deleting document: ', error);
-							});
+						const confirmed = window.confirm('정말로 삭제하시겠습니까?');
+
+						if (confirmed) {
+							Promise.all(deleteList.map((docId) => db.collection('person').doc(docId).delete()))
+								.then(() => {
+									alert('삭제되었습니다');
+									render();
+								})
+								.catch((error) => {
+									console.error('Error deleting document: ', error);
+								});
+						} else {
+							// 취소를 선택한 경우
+							console.log('삭제 작업이 취소되었습니다.');
+						}
 					})
 					.catch((error) => {
 						console.error('Error getting document: ', error);
 					});
 			};
 
-			resetBtn.addEventListener('click', function () {
-				location.reload();
-			});
-
-			searchInput.addEventListener('keypress', function (event) {
-				if (event.key === 'Enter') {
-					searchList();
-				}
-			});
-
-			searchBtn.addEventListener('click', searchList);
-
+			// 검색하기
 			function searchList() {
 				const inputValue = searchInput.value;
 
@@ -237,6 +234,15 @@
 					});
 			}
 
+			resetBtn.addEventListener('click', function () {
+				location.reload();
+			});
+			searchInput.addEventListener('keypress', function (event) {
+				if (event.key === 'Enter') {
+					searchList();
+				}
+			});
+			searchBtn.addEventListener('click', searchList);
 			createBtn.addEventListener('click', createList);
 			deleteBtn.addEventListener('click', deleteList);
 			searchBtn.addEventListener('click', searchList);
@@ -265,6 +271,32 @@
 				});
 			}
 
+			function sortFiltering() {
+				const filterCheckboxes = document.querySelectorAll('#filter-area input[type="checkbox"]');
+				let checkedList = [];
+
+				filterCheckboxes.forEach((checkbox) => {
+					checkbox.addEventListener('change', () => {
+						// 체크박스 상태에 따라 원하는 작업을 수행하도록 작성
+						if (checkbox.checked) {
+							// 체크될 때의 동작
+							checkedList.push(checkbox.value);
+							console.log(checkedList);
+
+							// 추가 작업을 여기에 작성
+						} else {
+							// 체크 해제될 때의 동작
+							checkedList = checkedList.filter((item) => item !== checkbox.value);
+							console.log(checkedList);
+
+							// 추가 작업을 여기에 작성
+						}
+						filteredRender(checkedList);
+					});
+				});
+			}
+
+			// 상담종류 필터링
 			function filteredRender(selectedSorts) {
 				let query = db.collection('person');
 
@@ -306,31 +338,6 @@
 
 					profileListWrap.innerHTML = profileList;
 					hideLoadingImage();
-				});
-			}
-
-			function sortFiltering() {
-				const filterCheckboxes = document.querySelectorAll('#filter-area input[type="checkbox"]');
-				let checkedList = [];
-
-				filterCheckboxes.forEach((checkbox) => {
-					checkbox.addEventListener('change', () => {
-						// 체크박스 상태에 따라 원하는 작업을 수행하도록 작성
-						if (checkbox.checked) {
-							// 체크될 때의 동작
-							checkedList.push(checkbox.value);
-							console.log(checkedList);
-
-							// 추가 작업을 여기에 작성
-						} else {
-							// 체크 해제될 때의 동작
-							checkedList = checkedList.filter((item) => item !== checkbox.value);
-							console.log(checkedList);
-
-							// 추가 작업을 여기에 작성
-						}
-						filteredRender(checkedList);
-					});
 				});
 			}
 

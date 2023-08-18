@@ -13,6 +13,8 @@ document.addEventListener('DOMContentLoaded', function() {
     firebase.auth().signOut();
     localStorage.removeItem('user');
     updateNickname();
+    // alert가 뜨지 않음
+    // alert('로그아웃 되었습니다');
     login.style.display = 'block';
     logoutBtn.style.display = 'none';
     
